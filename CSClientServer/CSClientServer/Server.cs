@@ -27,23 +27,24 @@ namespace CSServer
 
                 listener.Listen(10);
 
-                while (true)
+                do
                 {
-                    Console.WriteLine("Waiting connection......");
+                    Console.WriteLine("Waiting connection...");
 
                     Socket clientSocket = listener.Accept();
 
                     byte[] bytes = new Byte[1024];
                     string data = null;
 
-                    while (true)
+                    bool keepRunning = true;
+                    while (keepRunning)
                     {
                         int numByte = clientSocket.Receive(bytes);
 
                         data += Encoding.ASCII.GetString(bytes, 0, numByte);
 
-                        if(data.IndexOf("<EOF>") > -1)
-                            break;
+                        if (data.IndexOf("<EOF>") > -1)
+                            keepRunning = false;
                     }
                     Console.WriteLine("Text received -> {0}", data);
                     byte[] message = Encoding.ASCII.GetBytes("Test Server");
@@ -53,7 +54,9 @@ namespace CSServer
                     clientSocket.Shutdown(SocketShutdown.Both);
 
                     clientSocket.Close();
-                }
+
+                } while (true);
+
             }
             catch (Exception e)
             {
