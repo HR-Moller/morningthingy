@@ -1,0 +1,66 @@
+﻿@using BlazorWasm.Data
+@using System.Text.Json
+@inject HttpClient client
+
+<h3>Weather</h3>
+
+<input type="text" @bind="Searchstring"/>
+<button class="btn btn-primary" @onkeydown="Enter" @onclick="GetWeather">Search</button>
+
+       @if (forecasts == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Temp. (C)</th>
+            <th>Feelslike</th>
+            <th>Summary</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var forecast in forecasts)
+        {
+            <tr>
+                <td>@forecast.dt_txt</td>
+                <td>@forecast.main.temp</td>
+                <td>@forecast.main.feels_like</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    JsonSerializerOptions options = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    public string Searchstring = String.Empty;
+
+    private BlazorWasm.Data.Coordinates.Root[]? coordinates;
+    private Root? forecast;
+
+    private List<List> forecasts;
+
+    protected async Task GetWeather()
+    {
+        coordinates = await client.GetFromJsonAsync<BlazorWasm.Data.Coordinates.Root[]>($"https://api.openweathermap.org/geo/1.0/direct?q={Searchstring},DNK&limit=1&appid=fe5e02383d8389c0ed719c4281aa7994", options);
+        forecast = await client.GetFromJsonAsync<Root>($"https://api.openweathermap.org/data/2.5/forecast?lat={coordinates.FirstOrDefault().lat}&lon={coordinates.FirstOrDefault().lon}&appid=fe5e02383d8389c0ed719c4281aa7994&units=metric", options);
+        forecasts = forecast.list;
+    }
+
+    public void Enter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter")
+        {
+            GetWeather();
+        }
+    }
+}
